@@ -3,8 +3,8 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
-
+import "./DappLinkVRFStorage.sol";
+import "../interface/IDappLinkVRFManager.sol";
 /* 
     工作流程：
     1. 用户调用 requestRandomWords(requestId,numWords)
@@ -15,17 +15,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 */
 
-contract DappLinkVRF is Initializable, OwnableUpgradeable {
-    struct RequestStatus {
-        bool fulfilled;
-        uint256[] randomWords;
-    }
-
-    uint256[] public requestIds;
-    uint256 public lastRequestId;
-    address public dappLinkAddress;
-
-    mapping(uint256 => RequestStatus) public requestMapping;
+contract DappLinkVRF is Initializable, OwnableUpgradeable,DappLinkVRFStorage, IDappLinkVRFManager{
 
     event RequestSent(
         uint256 requestId,
@@ -74,7 +64,7 @@ contract DappLinkVRF is Initializable, OwnableUpgradeable {
         return (requestMapping[_requestId].fulfilled, requestMapping[_requestId].randomWords);
     }
 
-    function setDappLink(address _dappLinkAddress) public onlyOwner {
+    function setDappLink(address _dappLinkAddress) external onlyOwner {
         dappLinkAddress = _dappLinkAddress;
     }
 }
