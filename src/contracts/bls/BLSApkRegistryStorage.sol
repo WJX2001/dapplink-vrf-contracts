@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+
 import {Initializable} from "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
+// import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {BN254} from "../../libraries/BN254.sol";
 import {IBLSApkRegistry} from "../../interface/IBLSApkRegistry.sol";
 
 abstract contract BLSApkRegistryStorage is Initializable, IBLSApkRegistry {

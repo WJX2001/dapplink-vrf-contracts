@@ -4,7 +4,9 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./DappLinkVRFStorage.sol";
-import "../interface/IDappLinkVRFManager.sol";
+// import "../interface/IDappLinkVRFManager.sol";
+import "../../interface/IDappLinkVRFManager.sol";
+
 /* 
     工作流程：
     1. 用户调用 requestRandomWords(requestId,numWords)
@@ -15,18 +17,15 @@ import "../interface/IDappLinkVRFManager.sol";
 
 */
 
-contract DappLinkVRF is Initializable, OwnableUpgradeable,DappLinkVRFStorage, IDappLinkVRFManager{
+contract DappLinkVRF is
+    Initializable,
+    OwnableUpgradeable,
+    DappLinkVRFStorage,
+    IDappLinkVRFManager
+{
+    event RequestSent(uint256 requestId, uint256 _numWords, address current);
 
-    event RequestSent(
-        uint256 requestId,
-        uint256 _numWords,
-        address current
-    );
-
-    event FillRandomWords(
-        uint256 requestId,
-        uint256[] randomWords
-    );
+    event FillRandomWords(uint256 requestId, uint256[] randomWords);
 
     modifier onlyDappLink() {
         require(msg.sender == dappLinkAddress, "DappLinkVRF.onlyDappLink");
@@ -37,12 +36,20 @@ contract DappLinkVRF is Initializable, OwnableUpgradeable,DappLinkVRFStorage, ID
         _disableInitializers();
     }
 
-    function initialize(address initialOwner, address _dappLinkAddress) public initializer {
+    function initialize(
+        address initialOwner,
+        address _dappLinkAddress,
+        address _blsRegistry
+    ) public initializer {
         __Ownable_init(initialOwner);
+        blsRegistry = IBLSApkRegistry(_blsRegistry);
         dappLinkAddress = _dappLinkAddress;
     }
 
-    function requestRandomWords(uint256 _requestId, uint256 _numWords) external onlyOwner {
+    function requestRandomWords(
+        uint256 _requestId,
+        uint256 _numWords
+    ) external onlyOwner {
         requestMapping[_requestId] = RequestStatus({
             randomWords: new uint256[](0),
             fulfilled: false
@@ -52,7 +59,16 @@ contract DappLinkVRF is Initializable, OwnableUpgradeable,DappLinkVRFStorage, ID
         emit RequestSent(_requestId, _numWords, address(this));
     }
 
-    function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) external onlyDappLink {
+    function fulfillRandomWords(
+        uint256 _requestId,
+        uint256[] memory _randomWords,
+        bytes32 msgHash,
+        uint256 referenceBlockNumber,
+        IBLSApkRegistry.VrfNoSignerAndSignature memory params
+    ) external onlyDappLink {
+        // BLS 集成验签
+        blsRegistry.checkSignatures(msgHash, referenceBlockNumber, params);
+
         requestMapping[_requestId] = RequestStatus({
             fulfilled: true,
             randomWords: _randomWords
@@ -60,8 +76,13 @@ contract DappLinkVRF is Initializable, OwnableUpgradeable,DappLinkVRFStorage, ID
         emit FillRandomWords(_requestId, _randomWords);
     }
 
-    function getRequestStatus(uint256 _requestId) external view returns (bool fulfilled, uint256[] memory randomWords){
-        return (requestMapping[_requestId].fulfilled, requestMapping[_requestId].randomWords);
+    function getRequestStatus(
+        uint256 _requestId
+    ) external view returns (bool fulfilled, uint256[] memory randomWords) {
+        return (
+            requestMapping[_requestId].fulfilled,
+            requestMapping[_requestId].randomWords
+        );
     }
 
     function setDappLink(address _dappLinkAddress) external onlyOwner {

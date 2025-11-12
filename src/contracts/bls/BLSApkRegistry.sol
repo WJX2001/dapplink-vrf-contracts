@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
-import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
+// import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
+// import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "../../libraries/BN254.sol";
 import "../../interface/IBLSApkRegistry.sol";
@@ -313,7 +316,7 @@ gamma 的目的：防止攻击者提交伪造的公钥对。
              * 如果 σ = sk * H(msg) apk_G2 = sk * G2
              * e(σ, G2) = e(sk * H(msg),G2) = e(H(msg),sk*G2) = e(H(msg),apk_G2)
             */
-           (pairingSuccessful, signatureIsValid) = BN254.safePairing(
+           (pairingSuccessful, siganatureIsValid) = BN254.safePairing(
             sigma.plus(apk.scalar_mul(gamma)),
             BN254.negGeneratorG2(),
             BN254.hashToG1(msgHash).plus(BN254.generatorG1().scalar_mul(gamma)),
